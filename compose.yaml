@@ -18,11 +18,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-
+  discovery-service:
+    build: ./services/discovery-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8761:8761"
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
   auth-service:
     build: ./services/auth-service
     restart: unless-stopped
     environment:
+      CONFIG_SERVER_URL: http://config-service:8888
+      EUREKA_URL: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: auth-service
       TRIP_URL: http://trip-service:8083
       MONGODB_URI: mongodb://mongo:27017/smartbus_auth
       AUTH_URL: http://auth-service:8081
@@ -35,24 +44,56 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      discovery-service:
+        condition: service_started
+      config-service:
+        condition: service_started
+  config-service:
+    build: ./services/config-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:8888"
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      CONFIG_REPO_LOCATION: file:/config-repo/
+      EUREKA_URL: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: config-service
+    volumes:
+      - ./config-repo:/config-repo:ro
+    depends_on:
+      discovery-service:
+        condition: service_started
 
   transport-service:
     build: ./services/transport-service
     restart: unless-stopped
     environment:
+      
+      CONFIG_SERVER_URL: http://config-service:8888
       MONGODB_URI: mongodb://mongo:27017/smartbus_transport
       AUTH_URL: http://auth-service:8081
       TRIP_URL: http://trip-service:8083
       INTERNAL_TOKEN: ${INTERNAL_TOKEN}
       SEED_DATA: ${SEED_DATA:-true}
+      EUREKA_URL: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: transport-service
     depends_on:
       mongo:
         condition: service_healthy
+      discovery-service:
+        condition: service_started
+      config-service:
+        condition: service_started
+      
+      
 
   trip-service:
     build: ./services/trip-service
     restart: unless-stopped
     environment:
+      CONFIG_SERVER_URL: http://config-service:8888
+      EUREKA_URL: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: trip-service
       MONGODB_URI: mongodb://mongo:27017/smartbus_trip
       AUTH_URL: http://auth-service:8081
       TRANSPORT_URL: http://transport-service:8082
@@ -62,11 +103,18 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      discovery-service:
+        condition: service_started
+      config-service:
+        condition: service_started
 
   ticket-service:
     build: ./services/ticket-service
     restart: unless-stopped
     environment:
+      CONFIG_SERVER_URL: http://config-service:8888
+      EUREKA_URL: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: ticket-service
       SERVER_PORT: 8084
       MONGODB_URI: mongodb://mongo:27017/smartbus_ticket
       AUTH_URL: http://auth-service:8081
@@ -77,11 +125,18 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      discovery-service:
+        condition: service_started
+      config-service:
+        condition: service_started
 
   notification-service:
     build: ./services/notification-service
     restart: unless-stopped
     environment:
+      CONFIG_SERVER_URL: http://config-service:8888
+      EUREKA_URL: http://discovery-service:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: notification-service
       SERVER_PORT: 8085
       MONGODB_URI: mongodb://mongo:27017/smartbus_notification
       AUTH_URL: http://auth-service:8081
@@ -91,6 +146,10 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      discovery-service:
+        condition: service_started
+      config-service:
+        condition: service_started
 
   tracking-service:
     build: ./services/tracking-service
@@ -104,6 +163,9 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      config-service:
+        condition: service_started
+
 
   gateway:
     build: ./services/gateway
@@ -127,6 +189,7 @@ services:
       - notification-service
       - tracking-service
 
+
   frontend:
     build: ./frontend
     restart: unless-stopped
@@ -134,6 +197,7 @@ services:
       - "127.0.0.1:${WEB_PORT:-4200}:80"
     depends_on:
       - gateway
+      
 
 volumes:
   mongo-data:
