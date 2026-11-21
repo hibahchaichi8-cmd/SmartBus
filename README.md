@@ -1,5 +1,4 @@
-# SmartBus TN — Sprints 1 and 2
-
+# SmartBus TN — 
 A small, layered microservices application for a student demonstration. English Angular web UI, Java 17 / Spring Boot 4.1.1 services, Express services, MongoDB 7, RS256 JWT and Docker Compose.
 
 ## Start on Windows
