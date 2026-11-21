@@ -1,0 +1,141 @@
+<div class="pagehead">
+  <div>
+    <h1>My tickets</h1>
+  </div>
+
+  @if (!selectedTicket) {
+    <button
+      class="quiet"
+      (click)="load(page)"
+      [disabled]="loading || qrLoading"
+    >
+      Refresh
+    </button>
+  }
+</div>
+
+@if (error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+
+@if (selectedTicket; as ticket) {
+  <section class="panel ticket-detail">
+    <div class="sectionhead">
+      <h2>{{ ticket.routeName }}</h2>
+      <span class="badge">{{ ticket.status }}</span>
+    </div>
+
+    <p class="muted">
+      {{ ticket.registrationNumber }} ·
+      {{ ticket.plannedDeparture | date: "dd MMM yyyy HH:mm" : "+0100" }}
+    </p>
+
+    @if (qrLoading) {
+      <p class="note" role="status">Loading QR code…</p>
+    }
+
+    @if (qrImage) {
+      <img
+        class="ticket-qr"
+        [src]="qrImage"
+        width="240"
+        height="240"
+        alt="Ticket QR code"
+      />
+    }
+
+    <div class="actions">
+      @if (!qrLoading && !qrImage) {
+        <button (click)="showQr(ticket)">Retry</button>
+      }
+
+      <button
+        class="quiet"
+        (click)="closeQr()"
+        [disabled]="qrLoading"
+      >
+        Back to tickets
+      </button>
+    </div>
+  </section>
+} @else {
+  @if (loading) {
+    <section class="empty panel" role="status">
+      Loading tickets…
+    </section>
+  } @else {
+    @if (tickets.length === 0 && !error) {
+      <section class="empty panel">No tickets found.</section>
+    }
+
+    <div class="cards">
+      @for (ticket of tickets; track ticket.id) {
+       <article class="panel passenger-ticket">
+          <div class="sectionhead">
+            <h2>{{ ticket.routeName }}</h2>
+            <span class="badge">{{ ticket.status }}</span>
+          </div>
+
+          <p class="muted">{{ ticket.registrationNumber }}</p>
+
+          <div class="metrics">
+            <div>
+              <small>Departure</small>
+              <strong>
+                {{ ticket.plannedDeparture | date: "dd MMM HH:mm" : "+0100" }}
+              </strong>
+            </div>
+
+            <div>
+              <small>Fare</small>
+              <strong>
+                {{ ticket.amountMillimes / 1000 | number: "1.3-3" }}
+                {{ ticket.currency }}
+              </strong>
+            </div>
+          </div>
+
+          <p class="note">
+            Purchased
+            {{ ticket.purchasedAt | date: "dd MMM yyyy HH:mm" : "+0100" }}
+          </p>
+
+          @if (ticket.validatedAt) {
+            <p class="note">
+              Validated
+              {{ ticket.validatedAt | date: "dd MMM yyyy HH:mm" : "+0100" }}
+            </p>
+          }
+
+          @if (ticket.status === "VALID") {
+            <button (click)="showQr(ticket)">Show QR</button>
+          }
+        </article>
+      }
+    </div>
+
+    @if (tickets.length > 0) {
+      <div class="actions">
+        <button
+          class="quiet"
+          (click)="load(page - 1)"
+          [disabled]="page === 0"
+        >
+          Previous
+        </button>
+
+        <span class="muted">
+          Page {{ page + 1 }} / {{ totalPages }}
+        </span>
+
+        <button
+          class="quiet"
+          (click)="load(page + 1)"
+          [disabled]="page + 1 >= totalPages"
+        >
+          Next
+        </button>
+      </div>
+    }
+  }
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>tn.smartbus</groupId>
+  <artifactId>smartbus-services</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <modules>
+    <module>auth-service</module>
+    <module>transport-service</module>
+    <module>trip-service</module>
+    <module>ticket-service</module>
+    <module>notification-service</module>
+  </modules>
+</project>

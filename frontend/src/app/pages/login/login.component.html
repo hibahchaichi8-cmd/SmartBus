@@ -1,0 +1,134 @@
+<div class="login-layout">
+  <section class="login-intro">
+    <div class="login-intro-top">
+      <span class="login-emblem" aria-hidden="true">S</span>
+      <span>SMARTBUS TN</span>
+    </div>
+
+    <div class="login-intro-content">
+      <p class="login-kicker">MOVE WITH CONFIDENCE</p>
+      <h1>Your city.<br />Your next journey.</h1>
+
+      <div class="login-route" aria-hidden="true">
+        <div class="login-route-stop">
+          <span class="route-point"></span>
+          <span>Your departure</span>
+        </div>
+
+        <div class="login-route-line">
+          <svg viewBox="0 0 48 48" fill="none">
+            <rect x="12" y="7" width="24" height="30" rx="6" />
+            <path d="M12 23h24M18 37v5M30 37v5" />
+            <path d="M18 30h1M29 30h1" />
+          </svg>
+        </div>
+
+        <div class="login-route-stop">
+          <span class="route-point route-point-end"></span>
+          <span>Your destination</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="login-intro-footer">A better way to get around.</p>
+  </section>
+
+  <section class="panel login-form-panel">
+    <div class="login-heading">
+      <p class="eyebrow">
+        {{ register ? "JOIN SMARTBUS" : "WELCOME BACK" }}
+      </p>
+
+      <h2>{{ register ? "Create an account" : "Sign in" }}</h2>
+    </div>
+
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+
+    <form
+      #accountForm="ngForm"
+      (ngSubmit)="accountForm.valid && submit()"
+    >
+      @if (register) {
+        <label>
+          Full name
+          <input
+            name="name"
+            [(ngModel)]="fullName"
+            required
+            maxlength="100"
+            autocomplete="name"
+            placeholder="Your full name"
+          />
+        </label>
+      }
+
+      <label>
+        Email address
+        <input
+          name="email"
+          [(ngModel)]="email"
+          type="email"
+          required
+          email
+          autocomplete="username"
+          placeholder="you@example.com"
+        />
+      </label>
+
+      <label>
+        Password
+        <input
+          name="password"
+          [(ngModel)]="password"
+          type="password"
+          required
+          [minlength]="register ? 10 : 1"
+          maxlength="72"
+          [autocomplete]="register ? 'new-password' : 'current-password'"
+          [placeholder]="
+            register ? 'At least 10 characters' : 'Enter your password'
+          "
+        />
+      </label>
+
+      <button
+        type="submit"
+        class="login-submit"
+        [disabled]="busy || accountForm.invalid"
+      >
+        {{
+          busy
+            ? "Please wait…"
+            : register
+              ? "Create account"
+              : "Sign in"
+        }}
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path d="M4 12h15M13 6l6 6-6 6" />
+        </svg>
+      </button>
+    </form>
+
+    <div class="login-switch">
+      <p>
+        {{ register ? "Already a member?" : "New to SmartBus?" }}
+      </p>
+
+      <button
+        type="button"
+        class="link"
+        [disabled]="busy"
+        (click)="register = !register; error = ''"
+      >
+        {{ register ? "Sign in" : "Create an account" }}
+      </button>
+    </div>
+  </section>
+</div>

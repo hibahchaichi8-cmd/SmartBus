@@ -1,0 +1,116 @@
+<div class="pagehead">
+  <div>
+    <h1>My trips</h1>
+  </div>
+
+  <button class="quiet" (click)="load()" [disabled]="busy">
+    Refresh
+  </button>
+</div>
+
+@if (error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+
+@if (message) {
+  <p class="success" role="status">{{ message }}</p>
+}
+
+@if (trips.length === 0) {
+  <section class="empty panel">No trips assigned.</section>
+}
+
+@for (t of trips; track t.id) {
+  <article class="panel tripcard">
+    <div class="sectionhead">
+      <div>
+        <h2>{{ t.routeName }}</h2>
+
+        <p class="muted">
+          {{ t.registrationNumber }} · {{ t.capacity }} seats ·
+          {{ t.plannedDeparture | date: "dd MMM yyyy HH:mm" : "+0100" }}
+        </p>
+      </div>
+
+      <span class="badge">
+        {{ t.status.replace("_", " ") }}
+      </span>
+    </div>
+
+    <div class="stoplist">
+      @for (stop of t.stops; track $index) {
+        <span [class.done]="$index < t.checkpoints.length">
+          {{ $index < t.checkpoints.length ? "✓" : $index + 1 }}
+          · {{ stop.name }}
+        </span>
+      }
+    </div>
+
+    @if (t.status === "PLANNED") {
+      <button (click)="action(t, 'start')" [disabled]="busy">
+        Start trip
+      </button>
+    }
+
+    @if (t.status === "IN_PROGRESS") {
+      <div class="actions">
+        @if (t.checkpoints.length < t.stops.length) {
+          <button (click)="action(t, 'checkpoints')" [disabled]="busy">
+            Confirm arrival · {{ t.stops[t.checkpoints.length].name }}
+          </button>
+        }
+
+        <button
+          class="quiet"
+          (click)="action(t, 'finish')"
+          [disabled]="busy || t.checkpoints.length < t.stops.length"
+        >
+          Finish trip
+        </button>
+      </div>
+
+      <div class="drivergrid">
+        <section>
+          <h3>Passengers</h3>
+
+          <form (ngSubmit)="count(t)">
+            <label>
+              Passengers on board
+              <input
+                [name]="'count' + t.id"
+                type="number"
+                [(ngModel)]="counts[t.id]"
+                min="0"
+                [max]="t.capacity"
+                required
+              />
+            </label>
+
+            <button [disabled]="busy">Update count</button>
+          </form>
+        </section>
+
+        <section>
+          <h3>Location</h3>
+
+          <div class="actions">
+            @if (gpsTrip === t.id) {
+              <button class="quiet danger" (click)="stopGps()">
+                Stop sharing
+              </button>
+            } @else {
+              <button class="quiet" (click)="startGps(t)">
+                Share GPS location
+              </button>
+            }
+
+            
+          </div>
+        </section>
+      </div>
+    }
+    @if (t.status === "PLANNED" || t.status === "IN_PROGRESS") {
+  <app-trip-incidents [trip]="t" />
+}
+  </article>
+}

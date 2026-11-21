@@ -1,0 +1,138 @@
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">YOUR NETWORK</p>
+    <h1>Live buses</h1>
+  </div>
+
+  @if (updated) {
+    <div class="live-refresh">
+      <span class="live-indicator" aria-hidden="true"></span>
+      Updated {{ updated | date: "HH:mm:ss" : "+0100" }}
+    </div>
+  }
+</div>
+
+@if (error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+
+<section class="panel live-map-container">
+  <div class="live-map-heading">
+    <div class="live-map-title">
+      <span class="live-indicator" aria-hidden="true"></span>
+      <h2>Network map</h2>
+    </div>
+
+    <span class="badge">
+      {{ reports.length }}
+      {{ reports.length === 1 ? "bus" : "buses" }}
+    </span>
+  </div>
+
+  <div class="live-map-frame">
+    <app-bus-map [reports]="reports" />
+  </div>
+</section>
+
+@if (updated && reports.length === 0) {
+  <section class="empty panel">
+    <h3>No active buses</h3>
+    <p>Buses will appear here when trips are in progress.</p>
+  </section>
+}
+
+<div class="cards live-bus-cards">
+  @for (r of reports; track r.tripId) {
+    <article class="panel live-bus-card">
+      <div class="live-bus-heading">
+        <div class="live-bus-identity">
+          <div class="live-bus-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="5" y="3" width="14" height="15" rx="3" />
+              <path d="M5 11h14M8 18v3M16 18v3" />
+              <path d="M8 14h1M15 14h1" />
+            </svg>
+          </div>
+
+          <div>
+            <h3>{{ r.registrationNumber }}</h3>
+            <p>{{ r.routeName }}</p>
+          </div>
+        </div>
+
+        <span
+          class="badge"
+          [class.warning]="
+            r.stale ||
+            r.latitude === null ||
+            r.longitude === null
+          "
+        >
+          {{
+            r.latitude === null || r.longitude === null
+              ? "Location unavailable"
+              : r.stale
+                ? "Last known location"
+                : r.source === "GPS"
+                  ? "Live GPS"
+                  : r.source === "MANUAL"
+                    ? "Manual location"
+                    : "Reported location"
+          }}
+        </span>
+      </div>
+
+      <div class="live-bus-metrics">
+        <div>
+          <small>Passengers</small>
+          <strong>
+            {{ r.passengerCount === null ? "—" : r.passengerCount }}
+          </strong>
+          <small>Capacity {{ r.capacity }}</small>
+        </div>
+
+        <div class="live-seats">
+          <small>Seats available</small>
+          <strong>
+            {{ r.seatsAvailable === null ? "—" : r.seatsAvailable }}
+          </strong>
+        </div>
+
+        <div>
+          <small>Estimated arrival</small>
+          <strong>
+            {{
+              r.estimatedArrival
+                ? (r.estimatedArrival | date: "HH:mm" : "+0100")
+                : "—"
+            }}
+          </strong>
+        </div>
+      </div>
+
+      @if (r.overdue) {
+        <p class="live-arrival-note">Arrival update pending.</p>
+      }
+
+      <div class="live-bus-footer">
+        <small>
+          Location updated
+          {{
+            r.positionReceivedAt
+              ? (r.positionReceivedAt | date: "HH:mm:ss" : "+0100")
+              : "—"
+          }}
+        </small>
+
+        <small>
+          Occupancy updated
+          {{
+            r.occupancyReceivedAt
+              ? (r.occupancyReceivedAt | date: "HH:mm:ss" : "+0100")
+              : "—"
+          }}
+        </small>
+      </div>
+    </article>
+  }
+</div>

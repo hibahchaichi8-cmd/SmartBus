@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "projects": {
+    "smartbus": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.json",
+            "index": "src/index.html",
+            "styles": [
+              "src/styles.css"
+            ],
+            "outputPath": "dist/smartbus",
+            "allowedCommonJsDependencies": [
+              "leaflet",
+              "qrcode",
+              "html5-qrcode"
+
+            ],
+            "outputHashing": "all",
+            "optimization": {
+              "scripts": true,
+              "styles": {
+                "minify": true,
+                "inlineCritical": false
+              },
+              "fonts": false
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "smartbus:build"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+<div class="notification-bell">
+  <button
+    type="button"
+    class="quiet notification-trigger"
+    (click)="toggle()"
+    [attr.aria-expanded]="open"
+    aria-label="Notifications"
+  >
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      aria-hidden="true"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M10 21h4" />
+    </svg>
+
+    @if (unreadCount > 0) {
+      <strong class="notification-count">
+        {{ unreadCount > 99 ? "99+" : unreadCount }}
+      </strong>
+    }
+  </button>
+
+  @if (open) {
+    <section
+      class="notification-dropdown"
+      aria-label="Your notifications"
+    >
+      <div class="notification-heading">
+        <h3>Notifications</h3>
+
+        <button class="link" type="button" (click)="toggle()">
+          Close
+        </button>
+      </div>
+
+      @if (error) {
+        <p class="error" role="alert">{{ error }}</p>
+      }
+
+      @if (loading && items.length === 0) {
+        <p class="note" role="status">Loading…</p>
+      }
+
+      @if (!loading && !error && items.length === 0) {
+        <p class="note">No notifications.</p>
+      }
+
+      <ul class="notification-list">
+        @for (item of items; track item.id) {
+          <li [class.unread]="item.readAt === null">
+            <p>{{ item.message }}</p>
+
+            <small>
+              {{ item.createdAt | date: "dd MMM HH:mm" : "+0100" }}
+            </small>
+
+            @if (item.readAt === null) {
+              <button
+                class="link"
+                type="button"
+                (click)="markAsRead(item)"
+                [disabled]="loading || markingId !== ''"
+              >
+                {{
+                  markingId === item.id
+                    ? "Saving…"
+                    : "Mark as read"
+                }}
+              </button>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (totalPages > 1) {
+        <div class="notification-pagination">
+          <button
+            class="link"
+            type="button"
+            (click)="changePage(page - 1)"
+            [disabled]="loading || markingId !== '' || page === 0"
+          >
+            Previous
+          </button>
+
+          <small>{{ page + 1 }} / {{ totalPages }}</small>
+
+          <button
+            class="link"
+            type="button"
+            (click)="changePage(page + 1)"
+            [disabled]="
+              loading ||
+              markingId !== '' ||
+              page + 1 >= totalPages
+            "
+          >
+            Next
+          </button>
+        </div>
+      }
+    </section>
+  }
+</div>

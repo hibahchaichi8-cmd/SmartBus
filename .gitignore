@@ -1,0 +1,8 @@
+.env
+**/.data/
+**/node_modules/
+**/target/
+**/dist/
+**/.angular/
+*.log
+*.zip

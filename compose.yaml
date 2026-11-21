@@ -1,0 +1,140 @@
+name: smartbus-organized
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MONGO_PORT:-27019}:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "db.adminCommand('ping').ok"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  auth-service:
+    build: ./services/auth-service
+    restart: unless-stopped
+    environment:
+      TRIP_URL: http://trip-service:8083
+      MONGODB_URI: mongodb://mongo:27017/smartbus_auth
+      AUTH_URL: http://auth-service:8081
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?Run init-env.ps1 first}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Run init-env.ps1 first}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Run init-env.ps1 first}
+      KEY_FILE: /var/lib/smartbus/keys/signing-key.pk8
+    volumes:
+      - auth-keys:/var/lib/smartbus/keys
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  transport-service:
+    build: ./services/transport-service
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/smartbus_transport
+      AUTH_URL: http://auth-service:8081
+      TRIP_URL: http://trip-service:8083
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      SEED_DATA: ${SEED_DATA:-true}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  trip-service:
+    build: ./services/trip-service
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/smartbus_trip
+      AUTH_URL: http://auth-service:8081
+      TRANSPORT_URL: http://transport-service:8082
+      TICKET_URL: http://ticket-service:8084
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      SEED_DATA: ${SEED_DATA:-true}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  ticket-service:
+    build: ./services/ticket-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8084
+      MONGODB_URI: mongodb://mongo:27017/smartbus_ticket
+      AUTH_URL: http://auth-service:8081
+      TRIP_URL: http://trip-service:8083
+      TRANSPORT_URL: http://transport-service:8082
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      QR_SECRET: ${QR_SECRET:?Generate QR_SECRET in .env first}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  notification-service:
+    build: ./services/notification-service
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8085
+      MONGODB_URI: mongodb://mongo:27017/smartbus_notification
+      AUTH_URL: http://auth-service:8081
+      TRIP_URL: http://trip-service:8083
+      TICKET_URL: http://ticket-service:8084
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  tracking-service:
+    build: ./services/tracking-service
+    restart: unless-stopped
+    environment:
+      PORT: 3003
+      MONGODB_URI: mongodb://mongo:27017/smartbus_tracking
+      AUTH_URL: http://auth-service:8081
+      TRIP_URL: http://trip-service:8083
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  gateway:
+    build: ./services/gateway
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      AUTH_URL: http://auth-service:8081
+      TRANSPORT_URL: http://transport-service:8082
+      TRIP_URL: http://trip-service:8083
+      TICKET_URL: http://ticket-service:8084
+      NOTIFICATION_URL: http://notification-service:8085
+      TRACKING_URL: http://tracking-service:3003
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+    depends_on:
+      - auth-service
+      - transport-service
+      - trip-service
+      - ticket-service
+      - notification-service
+      - tracking-service
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_PORT:-4200}:80"
+    depends_on:
+      - gateway
+
+volumes:
+  mongo-data:
+  auth-keys:

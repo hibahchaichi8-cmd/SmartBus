@@ -1,0 +1,48 @@
+<section class="editor">
+  <h3>Report an incident</h3>
+
+  @if (error) {
+    <p class="error" role="alert">{{ error }}</p>
+  }
+
+  @if (message) {
+    <p class="success" role="status">{{ message }}</p>
+  }
+
+  <form (ngSubmit)="reportDelay()">
+    <div class="formgrid">
+      <label>
+        Estimated delay (minutes)
+        <input
+          name="delayMinutes"
+          type="number"
+          [(ngModel)]="delayMinutes"
+          min="1"
+          max="1440"
+          step="1"
+          required
+          [disabled]="busy"
+        />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit" [disabled]="busy">
+        Report delay
+      </button>
+
+      <button
+        type="button"
+        class="quiet danger"
+        (click)="reportBreakdown()"
+        [disabled]="busy"
+      >
+        Report breakdown
+      </button>
+    </div>
+  </form>
+
+  @if (busy) {
+    <p class="note" role="status">Sending report…</p>
+  }
+</section>

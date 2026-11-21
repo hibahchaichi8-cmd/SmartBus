@@ -1,0 +1,64 @@
+<div class="pagehead">
+  <div>
+    <h1>Validate a ticket</h1>
+  </div>
+</div>
+
+@if (error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+
+<section class="panel scanner-panel">
+  <div id="ticket-reader" class="ticket-reader"></div>
+
+  @if (busy) {
+    <p class="note" role="status">Processing…</p>
+  }
+
+  @if (scanFinished) {
+    <div class="actions">
+      <button (click)="scanAgain()" [disabled]="busy">
+        Scan another ticket
+      </button>
+    </div>
+  }
+</section>
+
+@if (ticket; as result) {
+  <section class="panel scanner-panel">
+    <p class="success" role="status">
+      Ticket validated successfully.
+    </p>
+
+    <div class="sectionhead">
+      <h2>{{ result.routeName }}</h2>
+      <span class="badge">{{ result.status }}</span>
+    </div>
+
+    <p class="muted">{{ result.registrationNumber }}</p>
+
+    <div class="metrics">
+      <div>
+        <small>Departure</small>
+        <strong>
+          {{ result.plannedDeparture | date: "dd MMM HH:mm" : "+0100" }}
+        </strong>
+      </div>
+
+      <div>
+        <small>Fare</small>
+        <strong>
+          {{ result.amountMillimes / 1000 | number: "1.3-3" }}
+          {{ result.currency }}
+        </strong>
+      </div>
+
+      <div>
+        <small>Validated at</small>
+        <strong>
+          {{ result.validatedAt | date: "HH:mm:ss" : "+0100" }}
+        </strong>
+      </div>
+    </div>
+  </section>
+}
